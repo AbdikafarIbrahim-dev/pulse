@@ -39,3 +39,11 @@ def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Email already registered")
     db.refresh(new_user)
     return new_user
+
+@app.post("/login", response_model=schemas.Token)
+def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == credentials.email).first()
+    if not user or not auth.verify_password(credentials.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    token = auth.create_access_token(data={"sub": user.email, "role": user.role})
+    return {"access_token": token, "token_type": "bearer"}
