@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from typing import List
 
 from database import SessionLocal, engine, Base
 import models
@@ -64,3 +65,28 @@ def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
 @app.get("/me", response_model=schemas.UserResponse)
 def read_current_user(current_user: models.User = Depends(get_current_user)):
     return current_user
+
+@app.post("/records", response_model=schemas.MedicalRecordResponse)
+def create_record(
+    record: schemas.MedicalRecordCreate,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    new_record = models.MedicalRecord(
+        title=record.title,
+        description=record.description,
+        patient_id=current_user.id,
+    )
+    db.add(new_record)
+    db.commit()
+    db.refresh(new_record)
+    return new_record
+
+@app.get("/records", response_model=List[schemas.MedicalRecordResponse])
+def get_my_records(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return db.query(models.MedicalRecord).filter(
+        models.MedicalRecord.patient_id == current_user.id
+    ).all()

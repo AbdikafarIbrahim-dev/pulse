@@ -1,4 +1,6 @@
 from pydantic import BaseModel, EmailStr
+from datetime import datetime
+from typing import Optional
 
 class UserCreate(BaseModel):
     full_name: str
@@ -22,3 +24,16 @@ class UserLogin(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+class MedicalRecordCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+
+class MedicalRecordResponse(BaseModel):
+    id: int
+    title: str
+    description: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
