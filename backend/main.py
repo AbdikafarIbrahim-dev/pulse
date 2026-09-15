@@ -173,3 +173,77 @@ def get_shared_with_me(
             patient_name=record.patient.full_name,
         ))
     return results
+
+@app.post("/appointments", response_model=schemas.AppointmentResponse)
+def create_appointment(
+    appointment: schemas.AppointmentCreate,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if current_user.role != "patient":
+        raise HTTPException(status_code=403, detail="Only patients can book appointments")
+
+    doctor = db.query(models.User).filter(
+        models.User.email == appointment.doctor_email,
+        models.User.role == "doctor",
+    ).first()
+    if not doctor:
+        raise HTTPException(status_code=404, detail="Doctor not found")
+
+    conflict = db.query(models.Appointment).filter(
+        models.Appointment.doctor_id == doctor.id,
+        models.Appointment.scheduled_time == appointment.scheduled_time,
+        models.Appointment.status != "cancelled",
+    ).first()
+    if conflict:
+        raise HTTPException(status_code=400, detail="This time slot is already booked")
+
+    new_appointment = models.Appointment(
+        patient_id=current_user.id,
+        doctor_id=doctor.id,
+        scheduled_time=appointment.scheduled_time,
+        status="pending",
+    )
+    db.add(new_appointment)
+    db.commit()
+    db.refresh(new_appointment)
+    return new_appointment
+
+@app.get("/appointments", response_model=List[schemas.AppointmentResponse])
+def get_my_appointments(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if current_user.role == "doctor":
+        return db.query(models.Appointment).filter(
+            models.Appointment.doctor_id == current_user.id
+        ).all()
+    else:
+        return db.query(models.Appointment).filter(
+            models.Appointment.patient_id == current_user.id
+        ).all()
+
+@app.patch("/appointments/{appointment_id}/status", response_model=schemas.AppointmentResponse)
+def update_appointment_status(
+    appointment_id: int,
+    update: schemas.AppointmentStatusUpdate,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if current_user.role != "doctor":
+        raise HTTPException(status_code=403, detail="Only doctors can update appointment status")
+
+    appointment = db.query(models.Appointment).filter(
+        models.Appointment.id == appointment_id,
+        models.Appointment.doctor_id == current_user.id,
+    ).first()
+    if not appointment:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+
+    if update.status not in ["confirmed", "cancelled"]:
+        raise HTTPException(status_code=400, detail="Status must be 'confirmed' or 'cancelled'")
+
+    appointment.status = update.status
+    db.commit()
+    db.refresh(appointment)
+    return appointment

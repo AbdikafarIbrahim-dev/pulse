@@ -59,3 +59,21 @@ class SharedRecordResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class AppointmentCreate(BaseModel):
+    doctor_email: EmailStr
+    scheduled_time: datetime
+
+class AppointmentResponse(BaseModel):
+    id: int
+    patient_id: int
+    doctor_id: int
+    scheduled_time: datetime
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class AppointmentStatusUpdate(BaseModel):
+    status: str
