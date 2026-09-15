@@ -90,3 +90,86 @@ def get_my_records(
     return db.query(models.MedicalRecord).filter(
         models.MedicalRecord.patient_id == current_user.id
     ).all()
+
+@app.post("/records/{record_id}/share", response_model=schemas.RecordAccessResponse)
+def share_record(
+    record_id: int,
+    share_request: schemas.ShareRecordRequest,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    record = db.query(models.MedicalRecord).filter(
+        models.MedicalRecord.id == record_id,
+        models.MedicalRecord.patient_id == current_user.id,
+    ).first()
+    if not record:
+        raise HTTPException(status_code=404, detail="Record not found")
+
+    doctor = db.query(models.User).filter(
+        models.User.email == share_request.doctor_email,
+        models.User.role == "doctor",
+    ).first()
+    if not doctor:
+        raise HTTPException(status_code=404, detail="Doctor not found")
+
+    existing = db.query(models.RecordAccess).filter(
+        models.RecordAccess.record_id == record_id,
+        models.RecordAccess.doctor_id == doctor.id,
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Already shared with this doctor")
+
+    access = models.RecordAccess(record_id=record_id, doctor_id=doctor.id)
+    db.add(access)
+    db.commit()
+    db.refresh(access)
+    return access
+
+@app.delete("/records/{record_id}/share/{doctor_id}")
+def revoke_share(
+    record_id: int,
+    doctor_id: int,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    record = db.query(models.MedicalRecord).filter(
+        models.MedicalRecord.id == record_id,
+        models.MedicalRecord.patient_id == current_user.id,
+    ).first()
+    if not record:
+        raise HTTPException(status_code=404, detail="Record not found")
+
+    access = db.query(models.RecordAccess).filter(
+        models.RecordAccess.record_id == record_id,
+        models.RecordAccess.doctor_id == doctor_id,
+    ).first()
+    if not access:
+        raise HTTPException(status_code=404, detail="Share not found")
+
+    db.delete(access)
+    db.commit()
+    return {"message": "Access revoked"}
+
+@app.get("/shared-with-me", response_model=List[schemas.SharedRecordResponse])
+def get_shared_with_me(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if current_user.role != "doctor":
+        raise HTTPException(status_code=403, detail="Only doctors can access this route")
+
+    accesses = db.query(models.RecordAccess).filter(
+        models.RecordAccess.doctor_id == current_user.id
+    ).all()
+
+    results = []
+    for access in accesses:
+        record = access.record
+        results.append(schemas.SharedRecordResponse(
+            id=record.id,
+            title=record.title,
+            description=record.description,
+            created_at=record.created_at,
+            patient_name=record.patient.full_name,
+        ))
+    return results

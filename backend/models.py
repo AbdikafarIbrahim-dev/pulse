@@ -25,3 +25,15 @@ class MedicalRecord(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     patient = relationship("User", back_populates="records")
+    shares = relationship("RecordAccess", back_populates="record")
+
+class RecordAccess(Base):
+    __tablename__ = "record_access"
+
+    id = Column(Integer, primary_key=True, index=True)
+    record_id = Column(Integer, ForeignKey("medical_records.id"), nullable=False)
+    doctor_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    granted_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    record = relationship("MedicalRecord", back_populates="shares")
+    doctor = relationship("User")
