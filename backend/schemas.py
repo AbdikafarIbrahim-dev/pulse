@@ -108,6 +108,7 @@ class OrderResponse(BaseModel):
     product_id: int
     quantity: int
     status: str
+    result: Optional[str] = None
     created_at: datetime
 
     class Config:
@@ -115,3 +116,6 @@ class OrderResponse(BaseModel):
 
 class OrderStatusUpdate(BaseModel):
     status: str
+
+class OrderResultUpdate(BaseModel):
+    result: str

@@ -15,6 +15,8 @@ app = FastAPI()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
+PROVIDER_ROLES = ["pharmacy", "lab"]
+
 def get_db():
     db = SessionLocal()
     try:
@@ -254,8 +256,8 @@ def create_product(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    if current_user.role != "pharmacy":
-        raise HTTPException(status_code=403, detail="Only pharmacies can list products")
+    if current_user.role not in PROVIDER_ROLES:
+        raise HTTPException(status_code=403, detail="Only pharmacies or labs can list products")
 
     new_product = models.Product(
         pharmacy_id=current_user.id,
@@ -308,7 +310,7 @@ def get_my_orders(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    if current_user.role == "pharmacy":
+    if current_user.role in PROVIDER_ROLES:
         return db.query(models.Order).join(models.Product).filter(
             models.Product.pharmacy_id == current_user.id
         ).all()
@@ -324,8 +326,8 @@ def update_order_status(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    if current_user.role != "pharmacy":
-        raise HTTPException(status_code=403, detail="Only pharmacies can update order status")
+    if current_user.role not in PROVIDER_ROLES:
+        raise HTTPException(status_code=403, detail="Only pharmacies or labs can update order status")
 
     order = db.query(models.Order).join(models.Product).filter(
         models.Order.id == order_id,
@@ -338,6 +340,30 @@ def update_order_status(
         raise HTTPException(status_code=400, detail="Invalid status")
 
     order.status = update.status
+    db.commit()
+    db.refresh(order)
+    return order
+
+@app.patch("/orders/{order_id}/result", response_model=schemas.OrderResponse)
+def attach_order_result(
+    order_id: int,
+    update: schemas.OrderResultUpdate,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if current_user.role != "lab":
+        raise HTTPException(status_code=403, detail="Only labs can attach results")
+
+    order = db.query(models.Order).join(models.Product).filter(
+        models.Order.id == order_id,
+        models.Product.pharmacy_id == current_user.id,
+        models.Product.category == "lab_test",
+    ).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Lab order not found")
+
+    order.result = update.result
+    order.status = "completed"
     db.commit()
     db.refresh(order)
     return order
