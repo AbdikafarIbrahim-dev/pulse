@@ -247,3 +247,97 @@ def update_appointment_status(
     db.commit()
     db.refresh(appointment)
     return appointment
+
+@app.post("/products", response_model=schemas.ProductResponse)
+def create_product(
+    product: schemas.ProductCreate,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if current_user.role != "pharmacy":
+        raise HTTPException(status_code=403, detail="Only pharmacies can list products")
+
+    new_product = models.Product(
+        pharmacy_id=current_user.id,
+        name=product.name,
+        description=product.description,
+        category=product.category,
+        price=product.price,
+        stock_quantity=product.stock_quantity,
+    )
+    db.add(new_product)
+    db.commit()
+    db.refresh(new_product)
+    return new_product
+
+@app.get("/products", response_model=List[schemas.ProductResponse])
+def list_products(db: Session = Depends(get_db)):
+    return db.query(models.Product).filter(models.Product.stock_quantity > 0).all()
+
+@app.post("/orders", response_model=schemas.OrderResponse)
+def create_order(
+    order: schemas.OrderCreate,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if current_user.role != "patient":
+        raise HTTPException(status_code=403, detail="Only patients can place orders")
+
+    product = db.query(models.Product).filter(models.Product.id == order.product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    if product.stock_quantity < order.quantity:
+        raise HTTPException(status_code=400, detail="Not enough stock available")
+
+    product.stock_quantity -= order.quantity
+
+    new_order = models.Order(
+        patient_id=current_user.id,
+        product_id=order.product_id,
+        quantity=order.quantity,
+        status="pending",
+    )
+    db.add(new_order)
+    db.commit()
+    db.refresh(new_order)
+    return new_order
+
+@app.get("/orders", response_model=List[schemas.OrderResponse])
+def get_my_orders(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if current_user.role == "pharmacy":
+        return db.query(models.Order).join(models.Product).filter(
+            models.Product.pharmacy_id == current_user.id
+        ).all()
+    else:
+        return db.query(models.Order).filter(
+            models.Order.patient_id == current_user.id
+        ).all()
+
+@app.patch("/orders/{order_id}/status", response_model=schemas.OrderResponse)
+def update_order_status(
+    order_id: int,
+    update: schemas.OrderStatusUpdate,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if current_user.role != "pharmacy":
+        raise HTTPException(status_code=403, detail="Only pharmacies can update order status")
+
+    order = db.query(models.Order).join(models.Product).filter(
+        models.Order.id == order_id,
+        models.Product.pharmacy_id == current_user.id,
+    ).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    if update.status not in ["processing", "shipped", "completed", "cancelled"]:
+        raise HTTPException(status_code=400, detail="Invalid status")
+
+    order.status = update.status
+    db.commit()
+    db.refresh(order)
+    return order

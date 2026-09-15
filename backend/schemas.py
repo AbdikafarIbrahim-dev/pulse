@@ -77,3 +77,41 @@ class AppointmentResponse(BaseModel):
 
 class AppointmentStatusUpdate(BaseModel):
     status: str
+
+class ProductCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    category: str = "medicine"
+    price: float
+    stock_quantity: int
+
+class ProductResponse(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    category: str
+    price: float
+    stock_quantity: int
+    pharmacy_id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class OrderCreate(BaseModel):
+    product_id: int
+    quantity: int = 1
+
+class OrderResponse(BaseModel):
+    id: int
+    patient_id: int
+    product_id: int
+    quantity: int
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class OrderStatusUpdate(BaseModel):
+    status: str
