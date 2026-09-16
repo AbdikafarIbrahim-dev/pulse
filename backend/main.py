@@ -8,6 +8,7 @@ from database import SessionLocal, engine, Base
 import models
 import schemas
 import auth
+import ai_companion
 
 Base.metadata.create_all(bind=engine)
 
@@ -367,3 +368,19 @@ def attach_order_result(
     db.commit()
     db.refresh(order)
     return order
+
+@app.post("/ai/ask", response_model=schemas.AIResponse)
+def ask_ai(
+    question: schemas.AIQuestion,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if current_user.role != "patient":
+        raise HTTPException(status_code=403, detail="Only patients can use the AI companion")
+
+    records = db.query(models.MedicalRecord).filter(
+        models.MedicalRecord.patient_id == current_user.id
+    ).all()
+
+    answer = ai_companion.ask_ai_about_records(question.question, records)
+    return {"answer": answer}

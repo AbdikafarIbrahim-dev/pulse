@@ -119,3 +119,9 @@ class OrderStatusUpdate(BaseModel):
 
 class OrderResultUpdate(BaseModel):
     result: str
+
+class AIQuestion(BaseModel):
+    question: str
+
+class AIResponse(BaseModel):
+    answer: str
