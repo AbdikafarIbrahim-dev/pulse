@@ -6,6 +6,7 @@ import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import Records from "./pages/Records";
 import Appointments from "./pages/Appointments";
+import AICompanion from "./pages/AICompanion";
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -53,6 +54,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Appointments />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ai-companion"
+        element={
+          <ProtectedRoute>
+            <AICompanion />
           </ProtectedRoute>
         }
       />

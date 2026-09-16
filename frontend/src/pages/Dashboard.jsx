@@ -32,6 +32,11 @@ function Dashboard() {
             Appointments
           </Link>
         )}
+        {user.role === "patient" && (
+          <Link to="/ai-companion" style={{ marginRight: "16px" }}>
+            AI Health Companion
+          </Link>
+        )}
       </div>
 
       <button onClick={handleLogout} style={{ padding: "10px 20px" }}>
