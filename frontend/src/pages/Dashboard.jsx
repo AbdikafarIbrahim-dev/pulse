@@ -27,6 +27,11 @@ function Dashboard() {
             My Medical Records
           </Link>
         )}
+        {(user.role === "patient" || user.role === "doctor") && (
+          <Link to="/appointments" style={{ marginRight: "16px" }}>
+            Appointments
+          </Link>
+        )}
       </div>
 
       <button onClick={handleLogout} style={{ padding: "10px 20px" }}>
