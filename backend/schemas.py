@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 class UserCreate(BaseModel):
     full_name: str
@@ -125,3 +125,29 @@ class AIQuestion(BaseModel):
 
 class AIResponse(BaseModel):
     answer: str
+
+class HospitalCreate(BaseModel):
+    name: str
+
+class HospitalResponse(BaseModel):
+    id: int
+    name: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class StaffMemberResponse(BaseModel):
+    id: int
+    full_name: str
+    email: str
+    role: str
+
+    class Config:
+        from_attributes = True
+
+class HospitalDashboard(BaseModel):
+    hospital: HospitalResponse
+    staff: List[StaffMemberResponse]
+    total_appointments: int
+    total_orders: int

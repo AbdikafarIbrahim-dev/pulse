@@ -3,6 +3,15 @@ from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from database import Base
 
+class Hospital(Base):
+    __tablename__ = "hospitals"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    staff = relationship("User", back_populates="hospital")
+
 class User(Base):
     __tablename__ = "users"
 
@@ -11,10 +20,12 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     role = Column(String, nullable=False, default="patient")
+    hospital_id = Column(Integer, ForeignKey("hospitals.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     records = relationship("MedicalRecord", back_populates="patient")
     products = relationship("Product", back_populates="pharmacy")
+    hospital = relationship("Hospital", back_populates="staff")
 
 class MedicalRecord(Base):
     __tablename__ = "medical_records"

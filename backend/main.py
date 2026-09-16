@@ -17,6 +17,7 @@ app = FastAPI()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 PROVIDER_ROLES = ["pharmacy", "lab"]
+HOSPITAL_STAFF_ROLES = ["doctor", "pharmacy", "lab", "admin"]
 
 def get_db():
     db = SessionLocal()
@@ -384,3 +385,71 @@ def ask_ai(
 
     answer = ai_companion.ask_ai_about_records(question.question, records)
     return {"answer": answer}
+
+@app.post("/hospitals", response_model=schemas.HospitalResponse)
+def create_hospital(
+    hospital: schemas.HospitalCreate,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can create hospitals")
+
+    new_hospital = models.Hospital(name=hospital.name)
+    db.add(new_hospital)
+    db.commit()
+    db.refresh(new_hospital)
+
+    current_user.hospital_id = new_hospital.id
+    db.commit()
+
+    return new_hospital
+
+@app.post("/hospitals/{hospital_id}/join")
+def join_hospital(
+    hospital_id: int,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if current_user.role not in HOSPITAL_STAFF_ROLES:
+        raise HTTPException(status_code=403, detail="Only staff roles can join a hospital")
+
+    hospital = db.query(models.Hospital).filter(models.Hospital.id == hospital_id).first()
+    if not hospital:
+        raise HTTPException(status_code=404, detail="Hospital not found")
+
+    current_user.hospital_id = hospital_id
+    db.commit()
+    return {"message": f"Joined {hospital.name}"}
+
+@app.get("/hospitals/dashboard", response_model=schemas.HospitalDashboard)
+def get_hospital_dashboard(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can view the hospital dashboard")
+
+    if not current_user.hospital_id:
+        raise HTTPException(status_code=400, detail="You are not associated with a hospital")
+
+    hospital = db.query(models.Hospital).filter(models.Hospital.id == current_user.hospital_id).first()
+
+    staff = db.query(models.User).filter(models.User.hospital_id == hospital.id).all()
+
+    staff_doctor_ids = [s.id for s in staff if s.role == "doctor"]
+    total_appointments = db.query(models.Appointment).filter(
+        models.Appointment.doctor_id.in_(staff_doctor_ids)
+    ).count() if staff_doctor_ids else 0
+
+    staff_provider_ids = [s.id for s in staff if s.role in PROVIDER_ROLES]
+    total_orders = db.query(models.Order).join(models.Product).filter(
+        models.Product.pharmacy_id.in_(staff_provider_ids)
+    ).count() if staff_provider_ids else 0
+
+    return schemas.HospitalDashboard(
+        hospital=hospital,
+        staff=staff,
+        total_appointments=total_appointments,
+        total_orders=total_orders,
+    )
