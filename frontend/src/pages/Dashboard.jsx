@@ -37,6 +37,11 @@ function Dashboard() {
             AI Health Companion
           </Link>
         )}
+        {(user.role === "patient" || user.role === "pharmacy" || user.role === "lab") && (
+          <Link to="/marketplace" style={{ marginRight: "16px" }}>
+            Marketplace
+          </Link>
+        )}
       </div>
 
       <button onClick={handleLogout} style={{ padding: "10px 20px" }}>

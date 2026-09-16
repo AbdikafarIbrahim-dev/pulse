@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import Records from "./pages/Records";
 import Appointments from "./pages/Appointments";
 import AICompanion from "./pages/AICompanion";
+import Marketplace from "./pages/Marketplace";
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -62,6 +63,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <AICompanion />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/marketplace"
+        element={
+          <ProtectedRoute>
+            <Marketplace />
           </ProtectedRoute>
         }
       />
