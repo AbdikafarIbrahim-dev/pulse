@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
+import Records from "./pages/Records";
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -23,10 +24,7 @@ function AppRoutes() {
   const { fetchCurrentUser } = useAuth();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      fetchCurrentUser();
-    }
+    fetchCurrentUser();
   }, []);
 
   return (
@@ -38,6 +36,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/records"
+        element={
+          <ProtectedRoute>
+            <Records />
           </ProtectedRoute>
         }
       />

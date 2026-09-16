@@ -1,5 +1,5 @@
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 function Dashboard() {
   const { user, logout } = useAuth();
@@ -20,6 +20,15 @@ function Dashboard() {
       <p>Welcome, {user.full_name}!</p>
       <p>Email: {user.email}</p>
       <p>Role: {user.role}</p>
+
+      <div style={{ margin: "20px 0" }}>
+        {user.role === "patient" && (
+          <Link to="/records" style={{ marginRight: "16px" }}>
+            My Medical Records
+          </Link>
+        )}
+      </div>
+
       <button onClick={handleLogout} style={{ padding: "10px 20px" }}>
         Log Out
       </button>
