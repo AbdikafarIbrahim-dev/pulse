@@ -8,6 +8,7 @@ import Records from "./pages/Records";
 import Appointments from "./pages/Appointments";
 import AICompanion from "./pages/AICompanion";
 import Marketplace from "./pages/Marketplace";
+import SharedRecords from "./pages/SharedRecords";
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -71,6 +72,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Marketplace />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/shared-records"
+        element={
+          <ProtectedRoute>
+            <SharedRecords />
           </ProtectedRoute>
         }
       />

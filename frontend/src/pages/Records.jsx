@@ -8,6 +8,9 @@ function Records() {
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [shareInputs, setShareInputs] = useState({});
+  const [sharingId, setSharingId] = useState(null);
 
   const fetchRecords = async () => {
     try {
@@ -34,6 +37,21 @@ function Records() {
       fetchRecords();
     } catch (err) {
       setError("Failed to add record");
+    }
+  };
+
+  const handleShare = async (recordId) => {
+    const doctorEmail = shareInputs[recordId];
+    if (!doctorEmail) return;
+    setError("");
+    setSuccess("");
+    try {
+      await apiClient.post(`/records/${recordId}/share`, { doctor_email: doctorEmail });
+      setSuccess("Record shared successfully.");
+      setShareInputs((prev) => ({ ...prev, [recordId]: "" }));
+      setSharingId(null);
+    } catch (err) {
+      setError(err.response?.data?.detail || "Failed to share record");
     }
   };
 
@@ -73,6 +91,7 @@ function Records() {
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none transition-all duration-200 focus:ring-2 focus:ring-[#4C3AA8]/30 focus:border-[#4C3AA8]"
             />
             {error && <p className="text-red-600 text-sm">{error}</p>}
+            {success && <p className="text-emerald-600 text-sm">{success}</p>}
             <button
               type="submit"
               className="bg-[#4C3AA8] text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-[#3B2E8A] hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0"
@@ -102,9 +121,42 @@ function Records() {
                 <p className="text-sm text-slate-600 mt-1">
                   {record.description || "No description"}
                 </p>
-                <p className="text-xs text-slate-400 mt-2">
+                <p className="text-xs text-slate-400 mt-2 mb-3">
                   {new Date(record.created_at).toLocaleString()}
                 </p>
+
+                {sharingId === record.id ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      placeholder="Doctor's email"
+                      value={shareInputs[record.id] || ""}
+                      onChange={(e) =>
+                        setShareInputs((prev) => ({ ...prev, [record.id]: e.target.value }))
+                      }
+                      className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#4C3AA8]/30 focus:border-[#4C3AA8]"
+                    />
+                    <button
+                      onClick={() => handleShare(record.id)}
+                      className="text-sm px-3 py-1.5 bg-[#4C3AA8] text-white rounded-lg hover:bg-[#3B2E8A] transition-colors"
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      onClick={() => setSharingId(null)}
+                      className="text-sm px-3 py-1.5 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setSharingId(record.id)}
+                    className="text-sm px-3 py-1.5 border border-slate-300 rounded-lg transition-colors hover:bg-[#4C3AA8]/5 hover:border-[#4C3AA8]/40"
+                  >
+                    Share with a doctor
+                  </button>
+                )}
               </div>
             ))}
           </div>

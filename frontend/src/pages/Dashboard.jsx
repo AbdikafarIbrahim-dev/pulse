@@ -26,6 +26,12 @@ function Dashboard() {
       desc: "View and add your health records",
     },
     {
+      show: user.role === "doctor",
+      to: "/shared-records",
+      title: "Shared With Me",
+      desc: "Records patients have shared with you",
+    },
+    {
       show: user.role === "patient" || user.role === "doctor",
       to: "/appointments",
       title: "Appointments",
@@ -49,6 +55,12 @@ function Dashboard() {
         user.role === "patient"
           ? "Order medicine and lab tests"
           : "Manage your listings and orders",
+    },
+    {
+      show: user.role === "admin",
+      to: "/hospital",
+      title: "Hospital Dashboard",
+      desc: "Manage your hospital and staff",
     },
   ];
 
