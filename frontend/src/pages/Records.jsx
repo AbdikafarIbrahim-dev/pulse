@@ -38,61 +38,78 @@ function Records() {
   };
 
   return (
-    <div style={{ maxWidth: "600px", margin: "40px auto", padding: "20px" }}>
-      <Link to="/dashboard">&larr; Back to Dashboard</Link>
-      <h1>My Medical Records</h1>
-
-      <form onSubmit={handleAddRecord} style={{ marginBottom: "30px" }}>
-        <h3>Add a Record</h3>
-        <div style={{ marginBottom: "10px" }}>
-          <input
-            type="text"
-            placeholder="Title (e.g. Blood Test Results)"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            style={{ width: "100%", padding: "8px" }}
-          />
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-gradient-to-r from-[#3B2E8A] to-[#4C3AA8]">
+        <div className="max-w-3xl mx-auto px-6 py-4">
+          <Link to="/dashboard" className="text-sm text-white/80 hover:text-white transition-colors">
+            &larr; Back to Dashboard
+          </Link>
         </div>
-        <div style={{ marginBottom: "10px" }}>
-          <textarea
-            placeholder="Description (optional)"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            style={{ width: "100%", padding: "8px" }}
-            rows={3}
-          />
-        </div>
-        {error && <p style={{ color: "red" }}>{error}</p>}
-        <button type="submit" style={{ padding: "10px 20px" }}>
-          Add Record
-        </button>
-      </form>
+      </header>
 
-      <h3>Your Records</h3>
-      {loading ? (
-        <p>Loading records...</p>
-      ) : records.length === 0 ? (
-        <p>No records yet.</p>
-      ) : (
-        <ul style={{ listStyle: "none", padding: 0 }}>
-          {records.map((record) => (
-            <li
-              key={record.id}
-              style={{
-                border: "1px solid #ccc",
-                borderRadius: "6px",
-                padding: "12px",
-                marginBottom: "10px",
-              }}
+      <main className="max-w-3xl mx-auto px-6 py-10">
+        <h1 className="text-xl font-semibold text-slate-900 mb-6">
+          Medical Records
+        </h1>
+
+        <div className="bg-white border border-slate-200 rounded-xl p-6 mb-8 shadow-sm">
+          <h2 className="text-sm font-semibold text-slate-900 mb-4">
+            Add a Record
+          </h2>
+          <form onSubmit={handleAddRecord} className="space-y-3">
+            <input
+              type="text"
+              placeholder="Title (e.g. Blood Test Results)"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none transition-all duration-200 focus:ring-2 focus:ring-[#4C3AA8]/30 focus:border-[#4C3AA8]"
+            />
+            <textarea
+              placeholder="Description (optional)"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none transition-all duration-200 focus:ring-2 focus:ring-[#4C3AA8]/30 focus:border-[#4C3AA8]"
+            />
+            {error && <p className="text-red-600 text-sm">{error}</p>}
+            <button
+              type="submit"
+              className="bg-[#4C3AA8] text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-[#3B2E8A] hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0"
             >
-              <strong>{record.title}</strong>
-              <p style={{ margin: "4px 0" }}>{record.description || "No description"}</p>
-              <small>{new Date(record.created_at).toLocaleString()}</small>
-            </li>
-          ))}
-        </ul>
-      )}
+              Add Record
+            </button>
+          </form>
+        </div>
+
+        <h2 className="text-sm font-semibold text-slate-900 mb-3">
+          Your Records
+        </h2>
+        {loading ? (
+          <span className="inline-block w-5 h-5 border-2 border-[#4C3AA8]/30 border-t-[#4C3AA8] rounded-full animate-spin" />
+        ) : records.length === 0 ? (
+          <p className="text-slate-500 text-sm">No records yet.</p>
+        ) : (
+          <div className="space-y-3">
+            {records.map((record) => (
+              <div
+                key={record.id}
+                className="bg-white border border-slate-200 rounded-xl p-4 transition-all duration-200 hover:shadow-md"
+              >
+                <h3 className="font-medium text-slate-900 text-sm">
+                  {record.title}
+                </h3>
+                <p className="text-sm text-slate-600 mt-1">
+                  {record.description || "No description"}
+                </p>
+                <p className="text-xs text-slate-400 mt-2">
+                  {new Date(record.created_at).toLocaleString()}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
     </div>
   );
 }

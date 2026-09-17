@@ -30,66 +30,72 @@ function AICompanion() {
   };
 
   return (
-    <div style={{ maxWidth: "600px", margin: "40px auto", padding: "20px" }}>
-      <Link to="/dashboard">&larr; Back to Dashboard</Link>
-      <h1>AI Health Companion</h1>
-      <p style={{ color: "#666", fontSize: "14px" }}>
-        Ask questions about your own medical records. This is not medical advice.
-      </p>
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-gradient-to-r from-[#3B2E8A] to-[#4C3AA8]">
+        <div className="max-w-2xl mx-auto px-6 py-4">
+          <Link to="/dashboard" className="text-sm text-white/80 hover:text-white transition-colors">
+            &larr; Back to Dashboard
+          </Link>
+        </div>
+      </header>
 
-      <div
-        style={{
-          border: "1px solid #ccc",
-          borderRadius: "6px",
-          padding: "16px",
-          minHeight: "300px",
-          maxHeight: "400px",
-          overflowY: "auto",
-          marginBottom: "16px",
-        }}
-      >
-        {messages.length === 0 && (
-          <p style={{ color: "#999" }}>Ask a question to get started.</p>
-        )}
-        {messages.map((msg, idx) => (
-          <div
-            key={idx}
-            style={{
-              marginBottom: "12px",
-              textAlign: msg.role === "user" ? "right" : "left",
-            }}
-          >
-            <span
-              style={{
-                display: "inline-block",
-                padding: "8px 12px",
-                borderRadius: "8px",
-                backgroundColor: msg.role === "user" ? "#dceeff" : "#f0f0f0",
-                maxWidth: "80%",
-                whiteSpace: "pre-wrap",
-              }}
-            >
-              {msg.text}
-            </span>
+      <main className="max-w-2xl mx-auto px-6 py-10">
+        <h1 className="text-xl font-semibold text-slate-900">
+          AI Health Companion
+        </h1>
+        <p className="text-sm text-slate-500 mt-1 mb-6">
+          Ask questions about your own medical records. This is not medical advice.
+        </p>
+
+        <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 min-h-[320px] max-h-[420px] overflow-y-auto mb-4">
+          {messages.length === 0 && (
+            <p className="text-slate-400 text-sm">Ask a question to get started.</p>
+          )}
+          <div className="space-y-3">
+            {messages.map((msg, idx) => (
+              <div
+                key={idx}
+                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className={`max-w-[80%] px-3 py-2 rounded-xl text-sm whitespace-pre-wrap transition-all duration-200 ${
+                    msg.role === "user"
+                      ? "bg-[#4C3AA8] text-white"
+                      : "bg-slate-100 text-slate-800"
+                  }`}
+                >
+                  {msg.text}
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-        {loading && <p style={{ color: "#999" }}>Thinking...</p>}
-      </div>
+          {loading && (
+            <div className="flex items-center gap-2 mt-2 text-slate-400 text-sm">
+              <span className="w-3 h-3 border-2 border-[#4C3AA8]/30 border-t-[#4C3AA8] rounded-full animate-spin" />
+              Thinking...
+            </div>
+          )}
+        </div>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+        {error && <p className="text-red-600 text-sm mb-2">{error}</p>}
 
-      <form onSubmit={handleAsk} style={{ display: "flex", gap: "8px" }}>
-        <input
-          type="text"
-          placeholder="Ask about your records..."
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          style={{ flex: 1, padding: "10px" }}
-        />
-        <button type="submit" disabled={loading} style={{ padding: "10px 20px" }}>
-          Send
-        </button>
-      </form>
+        <form onSubmit={handleAsk} className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Ask about your records..."
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none transition-all duration-200 focus:ring-2 focus:ring-[#4C3AA8]/30 focus:border-[#4C3AA8]"
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            className="bg-[#4C3AA8] text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-[#3B2E8A] hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:hover:translate-y-0"
+          >
+            Send
+          </button>
+        </form>
+      </main>
     </div>
   );
 }
